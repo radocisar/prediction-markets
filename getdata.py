@@ -1,4 +1,40 @@
 import requests
+import pandas as pd
+import pprint as pp
+import time
+import json
+from tqdm import tqdm
 
-req = requests.get("https://gamma-api.polymarket.com/status")
-print(req.status_code)
+status = requests.get("https://gamma-api.polymarket.com/status")
+print(f"gamma API status: {status.status_code}")
+
+page_len = 100
+offset = 0
+count = 0
+
+# pbar = tqdm()
+
+# while page_len == 100:
+#     evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}")
+#     # print(evts.headers)
+#     events = evts.json()
+
+#     for evt in events:
+#         count += 1
+# 
+    # time.sleep(0.02)
+    # page_len = len(events)
+    # offset += page_len
+    # pbar.update(page_len)
+    # # pbar.set_postfix(status="running")
+
+# pbar.close()
+# print(count)
+
+
+
+evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=1&offset=0")
+event = evts.json()[0]
+# pp.pprint(json.dump(event))
+event_df = pd.DataFrame([event])
+print(event_df.head())
