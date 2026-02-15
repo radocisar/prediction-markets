@@ -14,6 +14,9 @@ count = 0
 
 # pbar = tqdm()
 
+#######################
+# All events
+#######################
 # while page_len == 100:
 #     evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}")
 #     # print(evts.headers)
@@ -31,10 +34,26 @@ count = 0
 # pbar.close()
 # print(count)
 
-
-
+#######################
+# Latest event
+#######################
 evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=1&offset=0")
-event = evts.json()[0]
+# pp.pprint(evts.json())
+with open("events.json", "w") as f:
+    json.dump(evts.json(), f, indent=2)
+
+#######################
+# Event by slug
+#######################
+evts = requests.get(f"https://gamma-api.polymarket.com/events?slug=fed-decision-in-march-885")
+# pp.pprint(evts.json())
+with open("fed.json", "w") as f:
+    json.dump(evts.json(), f, indent=2)
+
+
+
+# event = evts.json()[0]
 # pp.pprint(json.dump(event))
-event_df = pd.DataFrame([event])
-print(event_df.head())
+
+# event_df = pd.DataFrame([event])
+# print(event_df.head())
