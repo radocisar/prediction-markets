@@ -35,7 +35,7 @@ try:
                         "markets": {
                             "mkt_question": m["question"],
                             "mkt_slug": m["slug"],
-                            "mkt_clob_token": json.loads(m["clobTokenIds"])[0],
+                            "mkt_clob_tokens": json.loads(m["clobTokenIds"]),
                         },
                     }
                     for m in evt["markets"]

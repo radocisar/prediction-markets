@@ -14,36 +14,62 @@ count = 0
 
 # pbar = tqdm()
 
+with open("all_events.json", "r") as f:
+    markets = json.load(f)
+# print(markets[0:5])
+# pp.pprint(markets[0:5])
+
+clobs = []
+
 #######################
 # All events
 #######################
-# while page_len == 100:
-#     evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}")
-#     # print(evts.headers)
-#     events = evts.json()
+try:
+    for market in tqdm(markets):
+        clobs.append(
+            [
+                {
+                    "evt_ticker": market["evt_ticker"],
+                    "evt_title": market["evt_title"],
+                    "mkt_question": market["markets"]["mkt_question"],
+                    "mkt_slug": market["markets"]["mkt_slug"],
+                    "mkt_clob_tokens": market["markets"]["mkt_clob_tokens"],
+                    "ask_prices": [
+                        requests.get(
+                            f"https://clob.polymarket.com/book?token_id={clob_token}"
+                        )
+                        .json()
+                        .get("asks", ["empty"])[-1]
+                        for clob_token in market["markets"]["mkt_clob_tokens"]
+                    ],
+                }
+            ]
+        )
+        print(market)
+        time.sleep(0.0012)
+        # pbar.set_postfix(status="running")
 
-#     for evt in events:
-#         count += 1
-#
-# time.sleep(0.02)
-# page_len = len(events)
-# offset += page_len
-# pbar.update(page_len)
-# # pbar.set_postfix(status="running")
+    with open("all_clob_prices.json", "w") as f:
+        json.dump(clobs, f, indent=2)
 
-# pbar.close()
-# print(count)
+    # pbar.close()
+except Exception as e:
+    print("-------")
+    print(market)
+    print("-------")
+    print(e)
+    # pp.pprint(evt)
 
 #######################
 # Latest event
 #######################
-ob = requests.get(
-    # f"https://clob.polymarket.com/book?token_id=46553455570564517989191023458705371521436514261892866503067981558938998232024"
-    f"https://clob.polymarket.com/book?token_id=48458075019957098166340475646923389496510427632693703161736892736757168972646"
-)
-# pp.pprint(evts.json())
-with open("order_book.json", "w") as f:
-    json.dump(ob.json(), f, indent=2)
+# ob = requests.get(
+#     # f"https://clob.polymarket.com/book?token_id=46553455570564517989191023458705371521436514261892866503067981558938998232024"
+#     f"https://clob.polymarket.com/book?token_id=102559817034631022221500208641784929295731053857601013029449249654006364919935"
+# )
+# # pp.pprint(evts.json())
+# with open("order_book.json", "w") as f:
+#     json.dump(ob.json(), f, indent=2)
 
 #######################
 # Event by slug
