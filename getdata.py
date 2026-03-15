@@ -8,9 +8,15 @@ import threading
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+status = requests.get("https://clob.polymarket.com")
+print(f"gamma API status: {status.status_code}")
+
+status = requests.get("https://clob.polymarket.com")
+print(f"CLOB API status: {status.status_code}")
+
 GAMMA_RATE = 500  # per 10 secs
 CLOB_RATE = 9000  # per 10 secs
-
+GAMMA_PAGE_LEN = 100
 
 class RateLimiter:
     def __init__(self, rate, rate_window=10):
@@ -36,87 +42,35 @@ clob_limiter = RateLimiter(CLOB_RATE)
 
 def fetch_clob(url):
     clob_limiter.acquire()
-    resp = requests.get(f"https://clob.polymarket.com/book?token_id={clob_token}")
-    return = resp.status_code, resp.json()
+    # only get lowest ask on both "Y" and "N" sides
+    resp = requests.get(url).json().get("asks", ["empty"])[-1]
+    return resp.status_code, resp.json()
 
 def fetch_gamma(url):
     gamma_limiter.acquire()
-    resp = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}")
+    events = requests.get(url)
+    
+    if (evts:=events.json()):
+        # only if there are events returned
+        clob_urls = [
+            f"https://clob.polymarket.com/book?token_id={clob_token}"
+            for event in evts
+            for market in event["markets"]
+            for clob_token in json.loads(market["clobTokenIds"])
+        ]
 
-    clob_urls = 
-
-    with ThreadPoolExecutor(max_workers=500) as executor:
-        fut = [executor.submit(fetch_clob, u) for u in clob_urls]
-        for f in as_completed(fut):
-            print(f.result())
+        with ThreadPoolExecutor(max_workers=500) as executor:
+            fut = [executor.submit(fetch_clob, u) for u in clob_urls]
+            for f in as_completed(fut):
+                print(f.result())
     
     return
 
-
-gamma_urls = # is there a way to get full {page_len}, so that all URLs can be built at the getgo?
+gamma_urls = [f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={GAMMA_PAGE_LEN}&offset={offset}" for offset in range(0, 10,000, GAMMA_PAGE_LEN)]
 
 with ThreadPoolExecutor(max_workers=500) as executor:
     fut = [executor.submit(fetch_gamma, u) for u in gamma_urls]
     for f in as_completed(fut):
         print(f.result())
 
-
-
-
-
-
-status = requests.get("https://gamma-api.polymarket.com/status")
-print(f"gamma API status: {status.status_code}")
-
-page_len = 100
-offset = 0
-count = 0
-
 # pbar = tqdm()
-
-#######################
-# All events
-#######################
-# while page_len == 100:
-#     evts = requests.get(f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}")
-#     # print(evts.headers)
-#     events = evts.json()
-
-#     for evt in events:
-#         count += 1
-#
-# time.sleep(0.02)
-# page_len = len(events)
-# offset += page_len
-# pbar.update(page_len)
-# # pbar.set_postfix(status="running")
-
-# pbar.close()
-# print(count)
-
-#######################
-# Latest event
-#######################
-evts = requests.get(
-    f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=1&offset=0"
-)
-# pp.pprint(evts.json())
-with open("events.json", "w") as f:
-    json.dump(evts.json(), f, indent=2)
-
-#######################
-# Event by slug
-#######################
-evts = requests.get(
-    f"https://gamma-api.polymarket.com/events?slug=fed-decision-in-march-885"
-)
-# pp.pprint(evts.json())
-with open("fed.json", "w") as f:
-    json.dump(evts.json(), f, indent=2)
-
-
-# event = evts.json()[0]
-# pp.pprint(json.dump(event))
-
-# event_df = pd.DataFrame([event])
-# print(event_df.head())

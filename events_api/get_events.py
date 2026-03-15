@@ -17,55 +17,58 @@ pbar = tqdm()
 #######################
 # All events
 #######################
-markets = []
-try:
-    while page_len == 100:
-        evts = requests.get(
-            f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}"
-        )
-        # print(evts.headers)
-        events = evts.json()
+# markets = []
+# try:
+#     while page_len == 100:
+#         evts = requests.get(
+#             f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit={page_len}&offset={offset}"
+#         )
+#         # print(evts.headers)
+#         events = evts.json()
 
-        for evt in events:
-            markets.extend(
-                [
-                    {
-                        "evt_ticker": evt["ticker"],
-                        "evt_title": evt["title"],
-                        "markets": {
-                            "mkt_question": m["question"],
-                            "mkt_slug": m["slug"],
-                            "mkt_clob_tokens": json.loads(m["clobTokenIds"]),
-                        },
-                    }
-                    for m in evt["markets"]
-                    if m["active"]
-                ]
-            )
+#         for evt in events:
+#             markets.extend(
+#                 [
+#                     {
+#                         "evt_ticker": evt["ticker"],
+#                         "evt_title": evt["title"],
+#                         "markets": {
+#                             "mkt_question": m["question"],
+#                             "mkt_slug": m["slug"],
+#                             "mkt_clob_tokens": json.loads(m["clobTokenIds"]),
+#                         },
+#                     }
+#                     for m in evt["markets"]
+#                     if m["active"]
+#                 ]
+#             )
 
-        # for evt in events:
-        #     count += 1
+#         # for evt in events:
+#         #     count += 1
 
-        time.sleep(0.02)
-        page_len = len(events)
-        offset += page_len
-        pbar.update(page_len)
-        # pbar.set_postfix(status="running")
+#         time.sleep(0.02)
+#         # print(f"page_len: {page_len}, offset: {offset}")
+#         page_len = len(events)
+#         offset += page_len
+#         pbar.update(page_len)
+#         # pbar.set_postfix(status="running")
 
-    pbar.close()
-    print(len(events))
-    with open("all_events.json", "w") as f:
-        json.dump(markets, f, indent=2)
-except Exception as e:
-    print(e)
-    pp.pprint(evt)
+#     pbar.close()
+#     print(len(events))
+#     with open("all_events.json", "w") as f:
+#         json.dump(markets, f, indent=2)
+# except Exception as e:
+#     print(e)
+#     pp.pprint(evt)
+
 #######################
 # Latest event
 #######################
-# evts = requests.get(
-#     f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=1&offset=0"
-# )
-# # pp.pprint(evts.json())
+evts = requests.get(
+    f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=2&offset=50000"
+)
+# pp.pprint(evts.headers)
+pp.pprint(len(evts.json()))
 # with open("events.json", "w") as f:
 #     json.dump(evts.json(), f, indent=2)
 
