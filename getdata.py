@@ -63,7 +63,7 @@ def fetch_gamma(url):
             for clob_token in json.loads(market["clobTokenIds"])
         ]
 
-        with ThreadPoolExecutor(max_workers=500) as executor:
+        with ThreadPoolExecutor(max_workers=100) as executor:
             fut = [executor.submit(fetch_clob, u) for u in clob_urls]
             for f in as_completed(fut):
                 print(f.result())
@@ -76,7 +76,7 @@ gamma_urls = [
     for offset in range(0, 10000, GAMMA_PAGE_LEN)
 ]
 
-with ThreadPoolExecutor(max_workers=500) as executor:
+with ThreadPoolExecutor(max_workers=20) as executor:
     fut = [executor.submit(fetch_gamma, u) for u in gamma_urls]
     for f in as_completed(fut):
         print(f.result())
