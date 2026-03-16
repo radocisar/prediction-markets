@@ -4,6 +4,7 @@ import pprint as pp
 import time
 import json
 from tqdm import tqdm
+from itertools import chain
 
 status = requests.get("https://gamma-api.polymarket.com/status")
 print(f"gamma API status: {status.status_code}")
@@ -64,27 +65,57 @@ pbar = tqdm()
 #######################
 # Latest event
 #######################
-evts = requests.get(
-    f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=2&offset=50000"
-)
-# pp.pprint(evts.headers)
-pp.pprint(len(evts.json()))
-# with open("events.json", "w") as f:
-#     json.dump(evts.json(), f, indent=2)
+# evts = requests.get(
+#     f"https://gamma-api.polymarket.com/events?order=id&ascending=false&active=true&closed=false&limit=2&offset=50000"
+# )
+# # pp.pprint(evts.headers)
+# pp.pprint(len(evts.json()))
+# # with open("events.json", "w") as f:
+# #     json.dump(evts.json(), f, indent=2)
 
 #######################
 # Event by slug
 #######################
+events = [
+    "kharg-island-no-longer-under-iranian-control-by-march-31",
+    "ncaa-tournament-team-to-make-national-championship",
+    "ncaa-tournament-team-to-make-semifinals",
+    "spl-taa-kho-2026-04-10-more-markets",
+    "spl-njm-neo-2026-04-10-more-markets",
+    "spl-sha-ith-2026-04-10-more-markets",
+    "ncaa-tournament-team-to-make-elite-eight",
+    "where-will-kirk-cousins-play-in-2026-27",
+    "ncaa-tournament-team-to-make-sweet-sixteen",
+    "will-kanye-tweet-again-by-march-31",
+]
+new = [
+    "kharg-island-no-longer-under-iranian-control-by-march-31",
+    "ncaa-tournament-team-to-make-national-championship",
+    "ncaa-tournament-team-to-make-semifinals",
+    "spl-taa-kho-2026-04-10-more-markets",
+    "spl-njm-neo-2026-04-10-more-markets",
+    "spl-sha-ith-2026-04-10-more-markets",
+    "ncaa-tournament-team-to-make-elite-eight",
+    "where-will-kirk-cousins-play-in-2026-27",
+    "ncaa-tournament-team-to-make-sweet-sixteen",
+    "will-kanye-tweet-again-by-march-31",
+]
+
+evts = [
+    requests.get(f"https://gamma-api.polymarket.com/events?slug={slug}")
+    for slug in events
+]
+
 # evts = requests.get(
 #     f"https://gamma-api.polymarket.com/events?slug=fed-decision-in-march-885"
 # )
-# # pp.pprint(evts.json())
-# with open("fed.json", "w") as f:
-#     json.dump(evts.json(), f, indent=2)
+# pp.pprint(evts.json())
+with open("events_by_slug.json", "w") as f:
+    json.dump(list(chain.from_iterable([evt.json() for evt in evts])), f, indent=2)
 
 
-# event = evts.json()[0]
-# pp.pprint(json.dump(event))
+# # event = evts.json()[0]
+# # pp.pprint(json.dump(event))
 
 # event_df = pd.DataFrame([event])
 # print(event_df.head())

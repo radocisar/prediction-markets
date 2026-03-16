@@ -16,7 +16,7 @@ print(f"CLOB API status: {status.status_code}")
 
 GAMMA_RATE = 500  # per 10 secs
 CLOB_RATE = 9000  # per 10 secs
-GAMMA_PAGE_LEN = 100
+GAMMA_PAGE_LEN = 10
 
 
 class RateLimiter:
@@ -51,24 +51,33 @@ def fetch_clob(url):
 
 
 def fetch_gamma(url):
+    start = time.time()
     gamma_limiter.acquire()
     events = requests.get(url)
 
-    if evts := events.json():
-        # only if there are events returned
-        clob_urls = [
-            f"https://clob.polymarket.com/book?token_id={clob_token}"
-            for event in evts
-            for market in event["markets"]
-            for clob_token in json.loads(market["clobTokenIds"])
-        ]
+    try:
+        if evts := events.json():
+            # print("-----------------------------------------------------")
+            # pp.pprint(evts)
+            # print("-----------------------------------------------------")
+            # only if there are events returned
+            clob_urls = [
+                f"https://clob.polymarket.com/book?token_id={clob_token}"
+                for event in evts
+                for market in event["markets"]
+                if market["active"]
+                for clob_token in json.loads(market["clobTokenIds"])
+            ]
+            #     fut = [executor.submit(fetch_clob, u) for u in clob_urls]
+            #     for f in as_completed(fut):
+            #         print(f.result())
 
-        with ThreadPoolExecutor(max_workers=100) as executor:
-            fut = [executor.submit(fetch_clob, u) for u in clob_urls]
-            for f in as_completed(fut):
-                print(f.result())
-
-    return
+        return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
+    except Exception as e:
+        raise Exception(
+            f"Error fetching gamma data: {e}, url: {url}"
+            # f"Error fetching gamma data: {e}, url: {url}, events: {[market["slug"] for e in events.json() for market in e["markets"]]}"
+        )
 
 
 gamma_urls = [
