@@ -16,7 +16,7 @@ print(f"CLOB API status: {status.status_code}")
 
 GAMMA_RATE = 500  # per 10 secs
 CLOB_RATE = 9000  # per 10 secs
-GAMMA_PAGE_LEN = 10
+GAMMA_PAGE_LEN = 100
 
 
 class RateLimiter:
@@ -56,14 +56,14 @@ def fetch_gamma(url):
     events = requests.get(url)
 
     try:
-        if evts := events.json():
+        if events:
             # print("-----------------------------------------------------")
             # pp.pprint(evts)
             # print("-----------------------------------------------------")
             # only if there are events returned
             clob_urls = [
                 f"https://clob.polymarket.com/book?token_id={clob_token}"
-                for event in evts
+                for event in events.json()
                 for market in event["markets"]
                 if market["active"]
                 for clob_token in json.loads(market["clobTokenIds"])
@@ -71,8 +71,9 @@ def fetch_gamma(url):
             #     fut = [executor.submit(fetch_clob, u) for u in clob_urls]
             #     for f in as_completed(fut):
             #         print(f.result())
-
-        return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
+            return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
+        else:
+            return f"No events returned, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
     except Exception as e:
         raise Exception(
             f"Error fetching gamma data: {e}, url: {url}"
