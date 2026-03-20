@@ -15,7 +15,7 @@ status = requests.get("https://clob.polymarket.com")
 print(f"CLOB API status: {status.status_code}")
 
 GAMMA_RATE = 500  # per 10 secs
-CLOB_RATE = 9000  # per 10 secs
+CLOB_RATE = 4500  # per 10 secs
 GAMMA_PAGE_LEN = 100
 
 
@@ -43,11 +43,25 @@ gamma_limiter = RateLimiter(GAMMA_RATE)
 clob_limiter = RateLimiter(CLOB_RATE)
 
 
-def fetch_clob(url):
+def fetch_clob(market):
     clob_limiter.acquire()
     # only get lowest ask on both "Y" and "N" sides
-    resp = requests.get(url).json().get("asks", ["empty"])[-1]
-    return resp.status_code, resp.json()
+    # print("reached clob")
+    # print(market["clobTokenIds"])
+
+    y_resp = requests.get(json.loads(market["clobTokenIds"])[0])
+    n_resp = requests.get(json.loads(market["clobTokenIds"])[1])
+
+    if y_resp and n_resp:
+        y_ask = y_resp.json().get("asks", [""])[-1]
+        n_ask = n_resp.json().get("asks", [""])[-1]
+        if y_ask and n_ask:
+            total = y_ask + n_ask
+                return {}
+        # return f"resp: {resp.json().get("asks", ["empty"])[-1]}"
+    else:
+        # print(f"No clob data returned")
+        return f"No clob data returned, url: {url}, thread: {threading.current_thread().name}"
 
 
 def fetch_gamma(url):
@@ -62,17 +76,34 @@ def fetch_gamma(url):
             # print("-----------------------------------------------------")
             # only if there are events returned
             clob_urls = [
-                f"https://clob.polymarket.com/book?token_id={clob_token}"
+                {
+                    "clobTokenIds": market["clobTokenIds"],
+                    "mkt_question": market["question"],
+                    "mkt_slug": market["slug"],
+                }
                 for event in events.json()
                 for market in event["markets"]
                 if market["active"]
-                for clob_token in json.loads(market["clobTokenIds"])
+                # for clob_token in json.loads(market["clobTokenIds"])
             ]
-            #     fut = [executor.submit(fetch_clob, u) for u in clob_urls]
-            #     for f in as_completed(fut):
-            #         print(f.result())
+            # print(clob_urls[0])
+            # clob_urls = [
+            #     f"https://clob.polymarket.com/book?token_id={clob_token}"
+            #     for event in events.json()
+            #     for market in event["markets"]
+            #     if market["active"]
+            #     for clob_token in json.loads(market["clobTokenIds"])
+            # ]
+            with ThreadPoolExecutor(max_workers=20) as clob_executor:
+                clob_fut = [
+                    clob_executor.submit(fetch_clob, clob_url) for clob_url in clob_urls
+                ]
+                for c in as_completed(clob_fut):
+                    print(c.result())
+
             return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
         else:
+            # pass
             return f"No events returned, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
     except Exception as e:
         raise Exception(
@@ -86,9 +117,12 @@ gamma_urls = [
     for offset in range(0, 10000, GAMMA_PAGE_LEN)
 ]
 
-with ThreadPoolExecutor(max_workers=20) as executor:
-    fut = [executor.submit(fetch_gamma, u) for u in gamma_urls]
-    for f in as_completed(fut):
-        print(f.result())
+with ThreadPoolExecutor(max_workers=20) as gamma_executor:
+    gamma_fut = [
+        gamma_executor.submit(fetch_gamma, gamma_url) for gamma_url in gamma_urls
+    ]
+    for g in as_completed(gamma_fut):
+        # pass
+        print(g.result())
 
 # pbar = tqdm()
