@@ -43,25 +43,30 @@ gamma_limiter = RateLimiter(GAMMA_RATE)
 clob_limiter = RateLimiter(CLOB_RATE)
 
 
-def fetch_clob(market):
+def fetch_clob(m):
     clob_limiter.acquire()
     # only get lowest ask on both "Y" and "N" sides
     # print("reached clob")
-    # print(market["clobTokenIds"])
+    # print(m["clobTokenIds"])
 
-    y_resp = requests.get(json.loads(market["clobTokenIds"])[0])
-    n_resp = requests.get(json.loads(market["clobTokenIds"])[1])
+    clob_tokens = json.loads(m["clobTokenIds"])
+    y_resp = requests.get(f"https://clob.polymarket.com/book?token_id={clob_tokens[0]}")
+    n_resp = requests.get(f"https://clob.polymarket.com/book?token_id={clob_tokens[1]}")
 
     if y_resp and n_resp:
         y_ask = y_resp.json().get("asks", [""])[-1]
         n_ask = n_resp.json().get("asks", [""])[-1]
         if y_ask and n_ask:
-            total = y_ask + n_ask
-                return {}
+            total = float(y_ask) + float(n_ask)
+            print(total)
+            return f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask: {y_ask}, n_ask: {n_ask}"
         # return f"resp: {resp.json().get("asks", ["empty"])[-1]}"
+        else:
+            print(f"No valid y/n asks returned")
+            return f"Not valid y/n asks, market: {m['mkt_question']}, y_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[0]}"}, n_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[1]}"}, thread: {threading.current_thread().name}"
     else:
-        # print(f"No clob data returned")
-        return f"No clob data returned, url: {url}, thread: {threading.current_thread().name}"
+        print(f"No clob data returned")
+        return f"No clob data returned, market: {m['mkt_question']}, y_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[0]}"}, n_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[1]}"}, thread: {threading.current_thread().name}"
 
 
 def fetch_gamma(url):
@@ -94,6 +99,7 @@ def fetch_gamma(url):
             #     if market["active"]
             #     for clob_token in json.loads(market["clobTokenIds"])
             # ]
+
             with ThreadPoolExecutor(max_workers=20) as clob_executor:
                 clob_fut = [
                     clob_executor.submit(fetch_clob, clob_url) for clob_url in clob_urls
@@ -101,6 +107,7 @@ def fetch_gamma(url):
                 for c in as_completed(clob_fut):
                     print(c.result())
 
+            # return f"lenght: {clob_urls}, thread: {threading.current_thread().name}"
             return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
         else:
             # pass
