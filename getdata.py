@@ -5,8 +5,10 @@ import time
 import json
 from tqdm import tqdm
 import threading
+from queue import Queue
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 status = requests.get("https://clob.polymarket.com")
 print(f"gamma API status: {status.status_code}")
@@ -39,6 +41,15 @@ class RateLimiter:
                 time.sleep(wait)
 
 
+def writer(q):
+    with open("clob_prices.json", "w") as f:
+        while True:
+            f.write(q.get())
+
+
+q = Queue()
+threading.Thread(target=writer, deamon=True).start()
+
 gamma_limiter = RateLimiter(GAMMA_RATE)
 clob_limiter = RateLimiter(CLOB_RATE)
 
@@ -54,18 +65,28 @@ def fetch_clob(m):
     n_resp = requests.get(f"https://clob.polymarket.com/book?token_id={clob_tokens[1]}")
 
     if y_resp and n_resp:
-        y_ask = y_resp.json().get("asks", [""])[-1]
-        n_ask = n_resp.json().get("asks", [""])[-1]
+        y_ask = y_resp.json().get("asks", [{}])[-1].get("price", None)
+        n_ask = n_resp.json().get("asks", [{}])[-1].get("price", None)
+        # print(f"Y Ask: {y_ask}, N Ask: {n_ask}")
         if y_ask and n_ask:
             total = float(y_ask) + float(n_ask)
-            print(total)
+            # print(total)
+            q.put(
+                {
+                    "mkt_question": {m["mkt_question"]},
+                    "mkt_slug": {m["mkt_slug"]},
+                    total: str({total}),
+                    y_ask: str({y_ask}),
+                    n_ask: str({n_ask}),
+                }
+            )
             return f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask: {y_ask}, n_ask: {n_ask}"
         # return f"resp: {resp.json().get("asks", ["empty"])[-1]}"
         else:
-            print(f"No valid y/n asks returned")
+            # print(f"No valid y/n asks returned")
             return f"Not valid y/n asks, market: {m['mkt_question']}, y_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[0]}"}, n_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[1]}"}, thread: {threading.current_thread().name}"
     else:
-        print(f"No clob data returned")
+        # print(f"No clob data returned")
         return f"No clob data returned, market: {m['mkt_question']}, y_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[0]}"}, n_clob_token: {"https://clob.polymarket.com/book?token_id={clob_tokens[1]}"}, thread: {threading.current_thread().name}"
 
 
