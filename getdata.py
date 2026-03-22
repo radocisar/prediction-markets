@@ -42,7 +42,7 @@ class RateLimiter:
 
 
 def writer(q):
-    with open("clob_prices_1.csv", "w") as f:
+    with open("clob_prices_2.csv", "w") as f:
         while True:
             if (msg := q.get()) is not None:
                 f.write(msg + "\n")
@@ -147,5 +147,7 @@ with ThreadPoolExecutor(max_workers=20) as gamma_executor:
     for g in as_completed(gamma_fut):
         # pass
         print(g.result())
-
+print("-" * 50)
+print("Finished fetching all data.")
+print("-" * 50)
 # pbar = tqdm()
