@@ -42,13 +42,14 @@ class RateLimiter:
 
 
 def writer(q):
-    with open("clob_prices.json", "w") as f:
+    with open("clob_prices.csv", "w") as f:
         while True:
-            f.write(q.get())
+            if (msg := q.get()) is not None:
+                f.write(msg + "\n")
 
 
 q = Queue()
-threading.Thread(target=writer, deamon=True).start()
+threading.Thread(target=writer, args=(q,), daemon=True).start()
 
 gamma_limiter = RateLimiter(GAMMA_RATE)
 clob_limiter = RateLimiter(CLOB_RATE)
@@ -72,13 +73,7 @@ def fetch_clob(m):
             total = float(y_ask) + float(n_ask)
             # print(total)
             q.put(
-                {
-                    "mkt_question": {m["mkt_question"]},
-                    "mkt_slug": {m["mkt_slug"]},
-                    total: str({total}),
-                    y_ask: str({y_ask}),
-                    n_ask: str({n_ask}),
-                }
+                f"{m["mkt_question"]}, {m["mkt_slug"]}, {str(total)}, {str(y_ask)}, {str(n_ask)}"
             )
             return f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask: {y_ask}, n_ask: {n_ask}"
         # return f"resp: {resp.json().get("asks", ["empty"])[-1]}"
