@@ -42,7 +42,7 @@ class RateLimiter:
 
 
 def writer(q):
-    with open("clob_prices.csv", "w") as f:
+    with open("clob_prices_1.csv", "w") as f:
         while True:
             if (msg := q.get()) is not None:
                 f.write(msg + "\n")
