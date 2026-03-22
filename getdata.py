@@ -42,7 +42,7 @@ class RateLimiter:
 
 
 def writer(q):
-    with open("clob_prices_2.csv", "w") as f:
+    with open("clob_prices_3.csv", "w") as f:
         while True:
             if (msg := q.get()) is not None:
                 f.write(msg + "\n")
@@ -66,16 +66,22 @@ def fetch_clob(m):
     n_resp = requests.get(f"https://clob.polymarket.com/book?token_id={clob_tokens[1]}")
 
     if y_resp and n_resp:
-        y_ask = y_resp.json().get("asks", [{}])[-1].get("price", None)
-        n_ask = n_resp.json().get("asks", [{}])[-1].get("price", None)
-        # print(f"Y Ask: {y_ask}, N Ask: {n_ask}")
-        if y_ask and n_ask:
-            total = float(y_ask) + float(n_ask)
+        y_ask_price = y_resp.json().get("asks", [{}])[-1].get("price", None)
+        n_ask_price = n_resp.json().get("asks", [{}])[-1].get("price", None)
+        y_ask_size = y_resp.json().get("asks", [{}])[-1].get("size", None)
+        n_ask_size = n_resp.json().get("asks", [{}])[-1].get("size", None)
+        # print(f"Y Ask: {y_ask_price}, N Ask: {n_ask_price}")
+        if y_ask_price and n_ask_price:
+            total = float(y_ask_price) + float(n_ask_price)
             # print(total)
             q.put(
-                f"{m["mkt_question"]}, {m["mkt_slug"]}, {str(total)}, {str(y_ask)}, {str(n_ask)}"
+                f'"{m["mkt_question"]}", {m["mkt_slug"]}, {str(total)}, {str(y_ask_price)}, {str(y_ask_size)}, {str(n_ask_price)}, {str(n_ask_size)}'
             )
-            return f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask: {y_ask}, n_ask: {n_ask}"
+            if total < 1.0:
+                print(
+                    f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask_price: {y_ask_price}, y_ask_size: {y_ask_size}, n_ask_price: {n_ask_price}, n_ask_size: {n_ask_size}"
+                )
+            return f"mkt_question: {m['mkt_question']}, mkt_slug: {m['mkt_slug']}, total: {total}, y_ask_price: {y_ask_price}, y_ask_size: {y_ask_size}, n_ask_price: {n_ask_price}, n_ask_size: {n_ask_size}"
         # return f"resp: {resp.json().get("asks", ["empty"])[-1]}"
         else:
             # print(f"No valid y/n asks returned")
@@ -121,7 +127,8 @@ def fetch_gamma(url):
                     clob_executor.submit(fetch_clob, clob_url) for clob_url in clob_urls
                 ]
                 for c in as_completed(clob_fut):
-                    print(c.result())
+                    pass
+                    # print(c.result())
 
             # return f"lenght: {clob_urls}, thread: {threading.current_thread().name}"
             return f"lenght: {len(clob_urls)}, start_time: {start}, end_time: {time.time()}, duration: {time.time() - start}, thread: {threading.current_thread().name}"
@@ -145,8 +152,8 @@ with ThreadPoolExecutor(max_workers=20) as gamma_executor:
         gamma_executor.submit(fetch_gamma, gamma_url) for gamma_url in gamma_urls
     ]
     for g in as_completed(gamma_fut):
-        # pass
-        print(g.result())
+        pass
+        # print(g.result())
 print("-" * 50)
 print("Finished fetching all data.")
 print("-" * 50)
