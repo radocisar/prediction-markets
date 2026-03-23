@@ -4,5 +4,6 @@
 
 # Plan
 [x] get all events into JSON 
-[ ] get all clobs
-[ ] calculate the arb opportunity based on the "Yes" and "No" adding up to <1
+[x] get all clobs
+[x] calculate the arb opportunity based on the "Yes" and "No" adding up to <1
+[ ] test whether arb opportunities are repeated
