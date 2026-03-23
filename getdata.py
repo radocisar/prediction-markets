@@ -18,7 +18,7 @@ print(f"CLOB API status: {status.status_code}")
 
 GAMMA_RATE = 500  # per 10 secs
 CLOB_RATE = 4500  # per 10 secs
-GAMMA_PAGE_LEN = 100
+GAMMA_PAGE_LEN = 500
 
 
 class RateLimiter:
@@ -42,7 +42,7 @@ class RateLimiter:
 
 
 def writer(q):
-    with open("clob_prices_4.csv", "w") as f:
+    with open("clob_prices_6.csv", "w") as f:
         while True:
             if (msg := q.get()) is not None:
                 f.write(msg + "\n")
@@ -147,7 +147,7 @@ gamma_urls = [
     for offset in range(0, 10000, GAMMA_PAGE_LEN)
 ]
 
-with ThreadPoolExecutor(max_workers=20) as gamma_executor:
+with ThreadPoolExecutor(max_workers=10) as gamma_executor:
     gamma_fut = [
         gamma_executor.submit(fetch_gamma, gamma_url) for gamma_url in gamma_urls
     ]
