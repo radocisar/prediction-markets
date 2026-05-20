@@ -77,16 +77,7 @@ pbar = tqdm()
 # Event by slug
 #######################
 events = [
-    "kharg-island-no-longer-under-iranian-control-by-march-31",
-    "ncaa-tournament-team-to-make-national-championship",
-    "ncaa-tournament-team-to-make-semifinals",
-    "spl-taa-kho-2026-04-10-more-markets",
-    "spl-njm-neo-2026-04-10-more-markets",
-    "spl-sha-ith-2026-04-10-more-markets",
-    "ncaa-tournament-team-to-make-elite-eight",
-    "where-will-kirk-cousins-play-in-2026-27",
-    "ncaa-tournament-team-to-make-sweet-sixteen",
-    "will-kanye-tweet-again-by-march-31",
+    "highest-temperature-in-london-on-may-21-2026",
 ]
 
 evts = [
