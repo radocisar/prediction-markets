@@ -77,7 +77,7 @@ pbar = tqdm()
 # Event by slug
 #######################
 events = [
-    "highest-temperature-in-london-on-may-21-2026",
+    "highest-temperature-in-london-on-june-20-2026",
 ]
 
 evts = [
@@ -88,9 +88,14 @@ evts = [
 # evts = requests.get(
 #     f"https://gamma-api.polymarket.com/events?slug=fed-decision-in-march-885"
 # )
-# pp.pprint(evts.json())
-with open("events_by_slug.json", "w") as f:
-    json.dump(list(chain.from_iterable([evt.json() for evt in evts])), f, indent=2)
+# d = evts[0].json()[0]["markets"]
+# evts[0].json()[0]["markets"][0]
+[
+    pp.pprint(f"{m['question']} - {m['clobTokenIds']}")
+    for m in evts[0].json()[0]["markets"]
+]
+# with open("events_by_slug.json", "w") as f:
+#     json.dump(list(chain.from_iterable([evt.json() for evt in evts])), f, indent=2)
 
 
 # # event = evts.json()[0]
